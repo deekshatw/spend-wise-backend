@@ -2,7 +2,7 @@ import express, { Express } from 'express'
 import http from 'http'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import dotenv from 'dotenv'
+import * as dotenv from "dotenv";
 import mongoose from 'mongoose'
 import helloRouter from './routes/hello.routes'
 import { router } from './routes/routes'

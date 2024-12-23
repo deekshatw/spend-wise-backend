@@ -2,16 +2,23 @@ import { Request, Response } from "express";
 import { createTransactionRepository, deleteTransactionRepository, getAllTransactionsOfOneUserRepository, getUserTransactionSummaryRepository, updateTransactionRepository } from "../repositories/transaction.repository";
 
 export const createTransactionController = async (req: Request, res: Response) => {
-    const transaction = req.body;
+    const transaction = req.body.transaction;
+    const userAction = req.body.userAction;
     console.log(transaction);
     try {
-        const response = await createTransactionRepository(transaction);
+        const response = await createTransactionRepository(transaction, userAction);
         console.log(response);
         if (response === 'success') {
             res.status(201).json({
                 "success": true,
                 "message": "Transaction created successfully"
             });
+        } else if (response === 'overage') {
+            res.status(400).json({
+                "success": false,
+                "message": "Budget exceeded!"
+            });
+
         } else {
             res.status(500).json({
                 "success": false,

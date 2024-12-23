@@ -45,6 +45,7 @@ export const getBudgetsListRepository = async (userId: Number): Promise<any[]> =
                 amount: budget.amount,
                 spent: budget.spent,
                 remaining: budget.amount - budget.spent,
+                overage: budget.overage,
                 percentageSpent: (budget.spent / budget.amount) * 100,
                 category: category ? {
                     categoryId: category.categoryId,
@@ -83,20 +84,20 @@ export const deleteBudgetRepository = async (budgetId: string): Promise<string> 
     }
 };
 
-export const checkNotificationsController = async (budgetId: string): Promise<void> => {
-    const budget = await BudgetModel.findOne({ budgetId });
-    if (!budget) {
-        throw new Error('Budget not found');
-    }
-    console.log(`Checking notifications for budget ${budgetId}`);
-    const percentageSpent = (budget.spent / budget.amount) * 100;
-    const thresholds = [50, 75, 100];
+// export const checkNotificationsController = async (budgetId: string): Promise<void> => {
+//     const budget = await BudgetModel.findOne({ budgetId });
+//     if (!budget) {
+//         throw new Error('Budget not found');
+//     }
+//     console.log(`Checking notifications for budget ${budgetId}`);
+//     const percentageSpent = (budget.spent / budget.amount) * 100;
+//     const thresholds = [50, 75, 100];
 
-    thresholds.forEach(async (threshold) => {
-        if (percentageSpent >= threshold && !budget.notificationsSent.get(threshold.toString())) {
-            console.log(`Send notification for ${threshold}%`);
-            budget.notificationsSent.set(threshold.toString(), true);
-        }
-    });
-};
+//     thresholds.forEach(async (threshold) => {
+//         if (percentageSpent >= threshold && !budget.notificationsSent.get(threshold.toString())) {
+//             console.log(`Send notification for ${threshold}%`);
+//             budget.notificationsSent.set(threshold.toString(), true);
+//         }
+//     });
+// };
 

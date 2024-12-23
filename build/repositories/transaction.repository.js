@@ -17,9 +17,51 @@ const budget_model_1 = __importDefault(require("../database/models/budget.model"
 const category_model_1 = __importDefault(require("../database/models/category.model"));
 const counter_service_1 = require("../database/models/helpers/counter.service");
 const transaction_model_1 = __importDefault(require("../database/models/transaction.model"));
-const createTransactionRepository = (transaction) => __awaiter(void 0, void 0, void 0, function* () {
+const createTransactionRepository = (transaction, userAction) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Create new transaction
+        // Check if the transaction is an expense
+        if (transaction.transactionType === 'expense') {
+            const budget = yield budget_model_1.default.findOne({
+                userId: transaction.userId,
+                category: transaction.categoryId,
+                startDate: { $lte: transaction.date },
+                endDate: { $gte: transaction.date },
+            }).exec();
+            if (budget) {
+                const newTotalSpent = Number(budget.spent) + Number(transaction.amount); // Ensure both are numbers
+                let overageAmount = 0;
+                // Check if budget will be exceeded
+                if (newTotalSpent > budget.amount) {
+                    overageAmount = newTotalSpent - budget.amount; // Calculate the amount of overage
+                    console.log(`Budget exceeded by ${overageAmount}`);
+                    // Update overage if user chooses to ignore
+                    if (userAction === 'ignore') {
+                        budget.overage = overageAmount;
+                        budget.spent = newTotalSpent;
+                        yield budget.save();
+                        console.log('Overage recorded and budget updated.');
+                    }
+                    else if (userAction === 'increase-budget') {
+                        budget.amount = budget.amount + overageAmount;
+                        budget.spent = newTotalSpent;
+                        yield budget.save();
+                        console.log('Budget increased and updated.');
+                    }
+                    return 'overage';
+                }
+                else {
+                    // Normal case: Budget not exceeded
+                    budget.spent = newTotalSpent;
+                    yield budget.save();
+                    console.log('Budget updated without exceeding.');
+                }
+                yield budget.save(); // Save the notificationsSent map
+            }
+            else {
+                console.log('No valid budget found for this expense.');
+            }
+        }
+        // Create the transaction after budget handling
         const transactionId = yield (0, counter_service_1.getNextTransactionId)();
         const created = yield transaction_model_1.default.create({
             transactionId: transactionId,
@@ -29,24 +71,8 @@ const createTransactionRepository = (transaction) => __awaiter(void 0, void 0, v
             date: transaction.date,
             userId: transaction.userId,
             categoryId: transaction.categoryId,
-            transactionType: transaction.transactionType
+            transactionType: transaction.transactionType,
         });
-        if (transaction.transactionType === 'expense') {
-            const budget = yield budget_model_1.default.findOne({
-                userId: transaction.userId,
-                category: transaction.categoryId,
-                startDate: { $lte: transaction.date },
-                endDate: { $gte: transaction.date }
-            }).exec();
-            if (budget) {
-                budget.spent += transaction.amount;
-                yield budget.save();
-                console.log('Budget updated');
-            }
-            else {
-                console.log('No valid budget found for this expense.');
-            }
-        }
         return created ? 'success' : 'error';
     }
     catch (error) {

@@ -12,15 +12,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateTransactionController = exports.deleteTransactionController = exports.getTransactionSummaryController = exports.getAllTransactionsOfOneUserController = exports.createTransactionController = void 0;
 const transaction_repository_1 = require("../repositories/transaction.repository");
 const createTransactionController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const transaction = req.body;
+    const transaction = req.body.transaction;
+    const userAction = req.body.userAction;
     console.log(transaction);
     try {
-        const response = yield (0, transaction_repository_1.createTransactionRepository)(transaction);
+        const response = yield (0, transaction_repository_1.createTransactionRepository)(transaction, userAction);
         console.log(response);
         if (response === 'success') {
             res.status(201).json({
                 "success": true,
                 "message": "Transaction created successfully"
+            });
+        }
+        else if (response === 'overage') {
+            res.status(400).json({
+                "success": false,
+                "message": "Budget exceeded!"
             });
         }
         else {

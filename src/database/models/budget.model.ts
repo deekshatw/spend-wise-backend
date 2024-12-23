@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import { BudgetInterface } from "../interfaces/budget.interface";
 
-const budgetSchema = new Schema({
+const budgetSchema = new Schema<BudgetInterface>({
     budgetId: {
         type: String,
         required: true,
@@ -17,7 +18,11 @@ const budgetSchema = new Schema({
     spent: {
         type: Number,
         default: 0,
-
+    },
+    overage: {
+        type: Number,
+        default: 0,
+        required: false
     },
     category: {
         type: String,

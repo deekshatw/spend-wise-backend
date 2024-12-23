@@ -5,6 +5,7 @@ export interface BudgetInterface extends Document {
     userId: string;
     amount: number;
     spent: number;
+    overage: number;
     category: string;
     startDate: Date;
     endDate: Date;
