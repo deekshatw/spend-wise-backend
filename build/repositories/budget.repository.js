@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkNotificationsController = exports.getBudgetsListRepository = exports.createBudgetRepository = void 0;
+exports.deleteBudgetRepository = exports.updateBudgetRepository = exports.getBudgetsListRepository = exports.createBudgetRepository = void 0;
 const budget_model_1 = __importDefault(require("../database/models/budget.model"));
 const category_model_1 = __importDefault(require("../database/models/category.model"));
 const counter_service_1 = require("../database/models/helpers/counter.service");
@@ -52,6 +52,7 @@ const getBudgetsListRepository = (userId) => __awaiter(void 0, void 0, void 0, f
                 amount: budget.amount,
                 spent: budget.spent,
                 remaining: budget.amount - budget.spent,
+                overage: budget.overage,
                 percentageSpent: (budget.spent / budget.amount) * 100,
                 category: category ? {
                     categoryId: category.categoryId,
@@ -69,19 +70,40 @@ const getBudgetsListRepository = (userId) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getBudgetsListRepository = getBudgetsListRepository;
-const checkNotificationsController = (budgetId) => __awaiter(void 0, void 0, void 0, function* () {
-    const budget = yield budget_model_1.default.findOne({ budgetId });
-    if (!budget) {
-        throw new Error('Budget not found');
+const updateBudgetRepository = (userId, budgetId, budget) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const updated = yield budget_model_1.default.updateOne({ budgetId: budgetId, userId: userId }, budget).exec();
+        return updated ? 'success' : 'error';
     }
-    console.log(`Checking notifications for budget ${budgetId}`);
-    const percentageSpent = (budget.spent / budget.amount) * 100;
-    const thresholds = [50, 75, 100];
-    thresholds.forEach((threshold) => __awaiter(void 0, void 0, void 0, function* () {
-        if (percentageSpent >= threshold && !budget.notificationsSent.get(threshold.toString())) {
-            console.log(`Send notification for ${threshold}%`);
-            budget.notificationsSent.set(threshold.toString(), true);
-        }
-    }));
+    catch (error) {
+        console.error(error);
+        return 'error';
+    }
 });
-exports.checkNotificationsController = checkNotificationsController;
+exports.updateBudgetRepository = updateBudgetRepository;
+const deleteBudgetRepository = (budgetId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deleted = yield budget_model_1.default.deleteOne({ budgetId }).exec();
+        return deleted ? 'success' : 'error';
+    }
+    catch (error) {
+        console.error(error);
+        return 'error';
+    }
+});
+exports.deleteBudgetRepository = deleteBudgetRepository;
+// export const checkNotificationsController = async (budgetId: string): Promise<void> => {
+//     const budget = await BudgetModel.findOne({ budgetId });
+//     if (!budget) {
+//         throw new Error('Budget not found');
+//     }
+//     console.log(`Checking notifications for budget ${budgetId}`);
+//     const percentageSpent = (budget.spent / budget.amount) * 100;
+//     const thresholds = [50, 75, 100];
+//     thresholds.forEach(async (threshold) => {
+//         if (percentageSpent >= threshold && !budget.notificationsSent.get(threshold.toString())) {
+//             console.log(`Send notification for ${threshold}%`);
+//             budget.notificationsSent.set(threshold.toString(), true);
+//         }
+//     });
+// };

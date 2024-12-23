@@ -42,6 +42,11 @@ const budgetSchema = new mongoose_1.Schema({
         type: Number,
         default: 0,
     },
+    overage: {
+        type: Number,
+        default: 0,
+        required: false
+    },
     category: {
         type: String,
         required: true

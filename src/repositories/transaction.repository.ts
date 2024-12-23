@@ -5,9 +5,56 @@ import { getNextTransactionId } from "../database/models/helpers/counter.service
 import TransactionModel from "../database/models/transaction.model";
 
 
-export const createTransactionRepository = async (transaction: TransactionInterface): Promise<string> => {
+export const createTransactionRepository = async (
+    transaction: TransactionInterface,
+    userAction: 'increase-budget' | 'ignore'
+): Promise<string> => {
     try {
-        // Create new transaction
+        // Check if the transaction is an expense
+        if (transaction.transactionType === 'expense') {
+            const budget = await BudgetModel.findOne({
+                userId: transaction.userId,
+                category: transaction.categoryId,
+                startDate: { $lte: transaction.date },
+                endDate: { $gte: transaction.date },
+            }).exec();
+
+            if (budget) {
+                const newTotalSpent = Number(budget.spent) + Number(transaction.amount); // Ensure both are numbers
+                let overageAmount = 0;
+
+                // Check if budget will be exceeded
+                if (newTotalSpent > budget.amount) {
+                    overageAmount = newTotalSpent - budget.amount; // Calculate the amount of overage
+                    console.log(`Budget exceeded by ${overageAmount}`);
+
+                    // Update overage if user chooses to ignore
+                    if (userAction === 'ignore') {
+                        budget.overage = overageAmount;
+                        budget.spent = newTotalSpent;
+                        await budget.save();
+                        console.log('Overage recorded and budget updated.');
+                    } else if (userAction === 'increase-budget') {
+                        budget.amount = budget.amount + overageAmount;
+                        budget.spent = newTotalSpent;
+                        await budget.save();
+                        console.log('Budget increased and updated.');
+                    }
+                    return 'overage';
+                } else {
+                    // Normal case: Budget not exceeded
+                    budget.spent = newTotalSpent;
+                    await budget.save();
+                    console.log('Budget updated without exceeding.');
+                }
+
+                await budget.save(); // Save the notificationsSent map
+            } else {
+                console.log('No valid budget found for this expense.');
+            }
+        }
+
+        // Create the transaction after budget handling
         const transactionId = await getNextTransactionId();
         const created = await TransactionModel.create({
             transactionId: transactionId,
@@ -17,25 +64,8 @@ export const createTransactionRepository = async (transaction: TransactionInterf
             date: transaction.date,
             userId: transaction.userId,
             categoryId: transaction.categoryId,
-            transactionType: transaction.transactionType
+            transactionType: transaction.transactionType,
         });
-
-        if (transaction.transactionType === 'expense') {
-            const budget = await BudgetModel.findOne({
-                userId: transaction.userId,
-                category: transaction.categoryId,
-                startDate: { $lte: transaction.date },
-                endDate: { $gte: transaction.date }
-            }).exec();
-
-            if (budget) {
-                budget.spent = Number(budget.spent) + Number(transaction.amount); // Ensure both are numbers
-                await budget.save();
-                console.log('Budget updated');
-            } else {
-                console.log('No valid budget found for this expense.');
-            }
-        }
 
         return created ? 'success' : 'error';
     } catch (error) {
@@ -43,6 +73,7 @@ export const createTransactionRepository = async (transaction: TransactionInterf
         return 'error';
     }
 };
+
 
 export const getAllTransactionsOfOneUserRepository = async (
     userId: number,
