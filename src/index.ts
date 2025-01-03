@@ -29,19 +29,25 @@ if (!mongoURI) {
 }
 
 // Start the server only after MongoDB connection
+let isServerRunning = false;
+
 mongoose.connect(mongoURI, {})
     .then(() => {
         console.log("MongoDB connected");
 
-        // Start the server after MongoDB connection
-        const port: number = app.get("PORT");
-        server.listen(port, () => {
-            console.log(`Server running at port:${port}`);
-        });
+        // Start the server only if it's not already running
+        if (!isServerRunning) {
+            const port: number = app.get("PORT");
+            server.listen(port, () => {
+                console.log(`Server running at port:${port}`);
+                isServerRunning = true;
+            });
+        }
     })
     .catch((err) => {
         console.error("MongoDB connection error:", err);
         process.exit(1); // Exit if MongoDB connection fails
     });
+
 
 export default server;
