@@ -67,4 +67,4 @@ mongoose_1.default.connect(mongoURI, {})
     console.error("MongoDB connection error:", err);
     process.exit(1); // Exit if MongoDB connection fails
 });
-exports.default = server;
+// export default server;

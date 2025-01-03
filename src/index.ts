@@ -50,4 +50,4 @@ mongoose.connect(mongoURI, {})
     });
 
 
-export default server;
+// export default server;
