@@ -11,5 +11,8 @@
             "src": "/(.*)",
             "dest": "src/index.ts"
         }
-    ]
+    ],
+    "env": {
+        "MONGO_DB_URL": "@mongo_db_url"
+    }
 }
