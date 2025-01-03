@@ -49,20 +49,22 @@ if (!mongoURI) {
     console.error("MongoDB connection string not found");
     process.exit(1);
 }
-mongoose_1.default.connect(mongoURI, {}).then(() => {
+// Start the server only after MongoDB connection
+let isServerRunning = false;
+mongoose_1.default.connect(mongoURI, {})
+    .then(() => {
     console.log("MongoDB connected");
-}).catch((err) => {
+    // Start the server only if it's not already running
+    if (!isServerRunning) {
+        const port = app.get("PORT");
+        server.listen(port, () => {
+            console.log(`Server running at port:${port}`);
+            isServerRunning = true;
+        });
+    }
+})
+    .catch((err) => {
     console.error("MongoDB connection error:", err);
     process.exit(1); // Exit if MongoDB connection fails
 });
-// Start the server
-try {
-    const port = app.get("PORT");
-    server.listen(port, () => {
-        console.log(`Server running at port:${port}`);
-    });
-}
-catch (err) {
-    console.error("Error starting server:", err);
-}
 exports.default = server;
