@@ -33,18 +33,17 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const routes_1 = require("./routes/routes");
+dotenv.config(); // Load environment variables
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
-// express configurations
+// Express configurations
 app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
-app.set("PORT", 3000);
-app.set("BASE_URL", "localhost");
-dotenv.config();
-// defining the routes
+app.set("PORT", process.env.PORT || 3000);
+// Define routes
 app.use("/api/v1", routes_1.router);
-// Mongo connection
+// MongoDB connection
 const mongoURI = process.env.MONGO_DB_URL;
 if (!mongoURI) {
     console.error("MongoDB connection string not found");
@@ -52,16 +51,18 @@ if (!mongoURI) {
 }
 mongoose_1.default.connect(mongoURI, {}).then(() => {
     console.log("MongoDB connected");
-}).catch((err) => () => { console.error(err); });
-// start the server
+}).catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit if MongoDB connection fails
+});
+// Start the server
 try {
     const port = app.get("PORT");
-    const baseUrl = app.get("BASE_URL");
     server.listen(port, () => {
-        console.log(`Server running at http://${baseUrl}:${port}`);
+        console.log(`Server running at port:${port}`);
     });
 }
 catch (err) {
-    console.log(err);
+    console.error("Error starting server:", err);
 }
 exports.default = server;
