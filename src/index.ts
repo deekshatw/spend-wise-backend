@@ -15,7 +15,7 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.set("PORT", 3000)
-app.set("BASE_URL", "localhost")
+// app.set("BASE_URL", "localhost")
 dotenv.config()
 
 // defining the routes
