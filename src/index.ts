@@ -1,59 +1,47 @@
-import express, { Express } from 'express';
-import http from 'http';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import * as dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import helloRouter from './routes/hello.routes';
-import { router } from './routes/routes';
+import express, { Express } from 'express'
+import http from 'http'
+import cors from 'cors'
+import bodyParser from 'body-parser'
+import * as dotenv from "dotenv";
+import mongoose from 'mongoose'
+import helloRouter from './routes/hello.routes'
+import { router } from './routes/routes'
 
-dotenv.config();
+const app: Express = express()
+const server = http.createServer(app)
 
-const app: Express = express();
-const server = http.createServer(app);
+// express configurations
+app.use(cors())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+app.set("PORT", 3000)
+app.set("BASE_URL", "localhost")
+dotenv.config()
 
-// Express configurations
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// defining the routes
+app.use("/api/v1", router)
 
-const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || 'localhost';
-const MONGO_URI = process.env.MONGO_DB_URL;
+// Mongo connection
+const mongoURI = process.env.MONGO_DB_URL
 
-if (!MONGO_URI) {
-    console.error("MongoDB connection string not found in environment variables.");
-    process.exit(1);
+if (!mongoURI) {
+    console.error("MongoDB connection string not found")
+    process.exit(1)
 }
 
-// Defining routes
-app.use("/api/v1", router);
 
-// MongoDB connection
-mongoose.connect(MONGO_URI, {})
-    .then(() => console.log("MongoDB connected"))
-    .catch((err) => {
-        console.error("Failed to connect to MongoDB:", err);
-        process.exit(1);
-    });
-
-// Start the server
+mongoose.connect(mongoURI, {}).then(() => {
+    console.log("MongoDB connected")
+}).catch((err) => () => { console.error(err) })
+// start the server
 try {
-    server.listen(PORT, () => {
-        console.log(`Server running at http://${BASE_URL}:${PORT}`);
-    });
+    const port: Number = app.get("PORT")
+    const baseUrl: String = app.get("BASE_URL")
+    server.listen(port, (): void => {
+        console.log(`Server running at http://${baseUrl}:${port}`)
+    })
 } catch (err) {
-    console.error("Error starting the server:", err);
-}
-if (module.hot) {
-    module.hot.accept('./some-module', () => {
-        console.log('Module updated!');
-    });
-
-    module.hot.dispose(() => {
-        console.log('Cleaning up before disposing...');
-    });
+    console.log(err)
 }
 
-
-export default server;
+export default server
